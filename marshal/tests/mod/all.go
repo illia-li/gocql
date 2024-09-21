@@ -1,18 +1,21 @@
 package mod
 
+var All = Mods{IntoCustom, IntoRef, IntoCustomRef}
+
 type Mods []Mod
 
-// Mod - value modifiers.
-// Designed for test case generators, such as gen.Group, marshal.Group and unmarshal.Group.
-type Mod interface {
-	Name() string
-	Apply([]interface{}) []interface{}
+func (l Mods) Append(vals ...interface{}) []interface{} {
+	out := append(make([]interface{}, 0), vals...)
+	for _, mod := range l {
+		out = append(out, mod(vals...)...)
+	}
+	return out
 }
 
-var (
-	IntoCustom    intoCustom
-	IntoRef       intoRef
-	IntoCustomRef intoCustomRef
+// Mod - value modifiers.
+type Mod func(vals ...interface{}) []interface{}
 
-	All = Mods{IntoCustom, IntoRef, IntoCustomRef}
-)
+func (m Mod) Append(vals ...interface{}) []interface{} {
+	out := append(make([]interface{}, 0), vals...)
+	return append(out, m(vals...)...)
+}

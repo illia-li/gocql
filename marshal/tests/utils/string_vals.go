@@ -8,28 +8,12 @@ import (
 	"time"
 )
 
-func ValueNames(vals []interface{}) []string {
-	names := make([]string, 0, len(vals))
-	if len(vals) == 1 {
-		names = append(names, fmt.Sprintf("(%T)", vals[0]))
-	} else {
-		for i := range vals {
-			names = append(names, valStrLim(100, vals[i]))
-		}
-	}
-	return names
-}
-
 func StringValue(in interface{}) string {
-	return fmt.Sprintf("(%T)(%s)", in, stringValue(in))
-}
-
-func valStrLim(lim int, in interface{}) string {
-	out := StringValue(in)
-	if len(out) > lim {
-		return out[:lim]
+	valStr := stringValue(in)
+	if len(valStr) > printLimit {
+		valStr = valStr[:printLimit]
 	}
-	return out
+	return fmt.Sprintf("(%T)(%s)", in, valStr)
 }
 
 func stringValue(in interface{}) string {

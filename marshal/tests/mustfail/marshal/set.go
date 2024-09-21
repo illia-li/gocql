@@ -45,7 +45,7 @@ func (s Set) Run(name string, t *testing.T, f func(interface{}) ([]byte, error))
 		// Prepare test info message
 		infoVal := utils.StringValue(val)
 		info := ""
-		if len(infoVal) < utils.PrintLimit && len(data) < utils.PrintLimit {
+		if len(infoVal) < utils.printLimit && len(data) < utils.printLimit {
 			info = fmt.Sprintf("\nvalue:%s\nreceived data:%x", infoVal, utils.StringData(data))
 		}
 

@@ -50,7 +50,7 @@ func (s Set) Run(name string, t *testing.T, f func([]byte, interface{}) error) {
 		// Prepare test info message
 		infoOut := utils.StringValue(deRef(val))
 		info := ""
-		if len(infoOut) < utils.PrintLimit && len(infoIn) < utils.PrintLimit || len(data) < utils.PrintLimit {
+		if len(infoOut) < utils.printLimit && len(infoIn) < utils.printLimit || len(data) < utils.printLimit {
 			printData := utils.StringData(data)
 			info = fmt.Sprintf("\n  tested data:%s\nunmarshal  in:%s\nunmarshal out:%s", printData, infoIn, infoOut)
 		}

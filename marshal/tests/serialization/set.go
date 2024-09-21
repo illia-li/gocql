@@ -34,88 +34,76 @@ func (s Set) AddModified(mods ...mod.Mod) Set {
 }
 
 func (s Set) Run(name string, t *testing.T, marshal func(interface{}) ([]byte, error), unmarshal func([]byte, interface{}) error) {
-	t.Logf("test set %s started", name)
-	for i := range s.Values {
-		val := s.Values[i]
+	t.Run(name, func(t *testing.T) {
+		for i := range s.Values {
+			val := s.Values[i]
 
-		if !funcs.IsExcludedMarshal(marshal) {
-			s.runMarshal(t, marshal, val)
-		}
+			t.Run(fmt.Sprintf("%T", val), func(t *testing.T) {
+				if marshal != nil {
+					s.runMarshal(t, marshal, val)
+				}
 
-		if !funcs.IsExcludedUnmarshal(unmarshal) {
-			s.runUnmarshal(t, unmarshal, val)
+				if unmarshal != nil {
+					s.runUnmarshal(t, unmarshal, val)
+				}
+			})
 		}
-	}
-	t.Logf("test set %s finished", name)
+	})
 }
 
 func (s Set) runMarshal(t *testing.T, f func(interface{}) ([]byte, error), val interface{}) {
-	if s.IssueMarshal != "" {
-		t.Logf("\nmarshal test skipped bacause there is unsolved issue:\n%s", s.IssueMarshal)
-		return
-	}
+	t.Run("marshal", func(tt *testing.T) {
+		if s.IssueMarshal != "" {
+			tt.Skipf("skipped bacause there is unsolved issue: %s", s.IssueMarshal)
+		}
 
-	received, err := func() (d []byte, err error) {
-		defer func() {
-			if r := recover(); r != nil {
-				err = utils.PanicErr{Err: r.(error), Stack: debug.Stack()}
-			}
+		result, err := func() (d []byte, err error) {
+			defer func() {
+				if r := recover(); r != nil {
+					err = utils.PanicErr{Err: r.(error), Stack: debug.Stack()}
+				}
+			}()
+			return f(val)
 		}()
-		return f(val)
-	}()
 
-	info := ""
-	if inStr := valStr(val); len(inStr)+len(s.Data)+len(received) < utils.PrintLimit*3 {
-		info = fmt.Sprintf("\n marshal   in:%s\nexpected data:%s\nreceived data:%s", valStr(val), dataStr(s.Data), dataStr(received))
-	}
+		if err != nil {
+			tt.Fatalf("marshal unexpectedly failed with error: %w", err)
+		}
 
-	switch {
-	case err != nil:
-		t.Errorf("for (%T) was error:%s", val, err)
-	case !funcs.EqualData(s.Data, received):
-		t.Errorf("for (%T) expected and received data are not equal%s", val, info)
-	default:
-		t.Logf("for (%T) test done%s", val, info)
-	}
+		if !funcs.EqualData(s.Data, result) {
+			tt.Errorf("expect %s but got %s", utils.StringData(s.Data), utils.StringData(result))
+		}
+	})
 }
 
-func (s Set) runUnmarshal(t *testing.T, f func([]byte, interface{}) error, val interface{}) {
-	if s.IssueUnmarshal != "" {
-		t.Logf("\nunmarshal test skipped bacause there is unsolved issue:\n%s", s.IssueUnmarshal)
-		return
-	}
+func (s Set) runUnmarshal(t *testing.T, f func([]byte, interface{}) error, expected interface{}) {
+	t.Run("unmarshal", func(tt *testing.T) {
+		if s.IssueUnmarshal != "" {
+			t.Skipf("skipped bacause there is unsolved issue: %s", s.IssueUnmarshal)
+		}
 
-	inputVal := funcs.New(val)
-	inValStr := valStr(inputVal)
-	inValPtr := ptrStr(inputVal)
+		result := funcs.New(expected)
+		inValPtr := utils.StringPointer(result)
 
-	err := func() (err error) {
-		defer func() {
-			if r := recover(); r != nil {
-				err = utils.PanicErr{Err: r.(error), Stack: debug.Stack()}
-			}
+		err := func() (err error) {
+			defer func() {
+				if r := recover(); r != nil {
+					err = utils.PanicErr{Err: r.(error), Stack: debug.Stack()}
+				}
+			}()
+			return f(bytes.Clone(s.Data), result)
 		}()
-		return f(bytes.Clone(s.Data), inputVal)
-	}()
-	if err != nil {
-		t.Errorf("for (%T) was error:%s", val, err)
-		return
-	}
 
-	outValStr := valStr(deRef(inputVal))
-	if outValPtr := ptrStr(inputVal); inValPtr != "" && outValPtr != "" && inValPtr != outValPtr {
-		t.Errorf("for (%T) unmarshal function rewrites existing pointer", val)
-		return
-	}
+		if err != nil {
+			tt.Fatalf("unmarshal unexpectedly failed with error: %w", err)
+		}
 
-	result := ""
-	if expectedStr := valStr(val); len(expectedStr)+len(inValStr)+len(outValStr) < utils.PrintLimit*3 {
-		result = fmt.Sprintf("\n     expected:%s\nunmarshal  in:%s\nunmarshal out:%s", expectedStr, inValStr, outValStr)
-	}
+		if outValPtr := utils.StringPointer(result); inValPtr != "" && outValPtr != "" && inValPtr != outValPtr {
+			tt.Fatalf("for (%T) unmarshal function rewrites existing pointer", expected)
+		}
 
-	if !funcs.EqualVals(val, deRef(inputVal)) {
-		t.Errorf("for (%T) expected and received values are not equal%s", val, result)
-	} else {
-		t.Logf("for (%T) test done%s", val, result)
-	}
+		if !funcs.EqualVals(expected, utils.DeReference(result)) {
+			tt.Errorf("expect %s but got %s", utils.StringValue(expected), utils.StringValue(result))
+		}
+	})
 }

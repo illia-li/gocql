@@ -1,16 +1,8 @@
 package funcs
 
 import (
-	"bytes"
 	"reflect"
 )
-
-func EqualData(in1, in2 []byte) bool {
-	if in1 == nil || in2 == nil {
-		return in1 == nil && in2 == nil
-	}
-	return bytes.Equal(in1, in2)
-}
 
 func New(in interface{}) interface{} {
 	return getNew(reflect.ValueOf(in))

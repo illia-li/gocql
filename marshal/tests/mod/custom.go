@@ -44,19 +44,13 @@ type (
 	MapUDT map[string]interface{}
 )
 
-type intoCustom struct{}
-
-func (m intoCustom) Name() string {
-	return "custom"
-}
-
-func (m intoCustom) Apply(vals []interface{}) []interface{} {
+var IntoCustom Mod = func(vals ...interface{}) []interface{} {
 	out := make([]interface{}, 0)
 	for i := range vals {
 		if vals[i] == nil {
 			continue
 		}
-		ct := m.apply(vals[i])
+		ct := intoCustom(vals[i])
 		if ct != nil {
 			out = append(out, ct)
 		}
@@ -64,7 +58,7 @@ func (m intoCustom) Apply(vals []interface{}) []interface{} {
 	return out
 }
 
-func (m intoCustom) apply(i interface{}) interface{} {
+func intoCustom(i interface{}) interface{} {
 	switch v := i.(type) {
 	case bool:
 		return Bool(v)
@@ -131,11 +125,11 @@ func (m intoCustom) apply(i interface{}) interface{} {
 	case [1]interface{}:
 		return ArrAny(v)
 	default:
-		return m.applyRef(i)
+		return intoCustomR(i)
 	}
 }
 
-func (m intoCustom) applyRef(i interface{}) interface{} {
+func intoCustomR(i interface{}) interface{} {
 	switch v := i.(type) {
 	case *bool:
 		return (*Bool)(v)

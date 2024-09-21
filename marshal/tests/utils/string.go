@@ -5,8 +5,7 @@ import (
 	"reflect"
 )
 
-const SoloRunMsg = "SoloRun is true, please remove it after finished tuning"
-const PrintLimit = 100
+const printLimit = 100
 
 func StringPointer(i interface{}) string {
 	rv := reflect.ValueOf(i)
@@ -23,8 +22,8 @@ func StringPointer(i interface{}) string {
 }
 
 func StringData(p []byte) string {
-	if p == nil {
-		return "[nil]"
+	if len(p) > printLimit {
+		p = p[:printLimit]
 	}
 	return fmt.Sprintf("[%x]", p)
 }
