@@ -14,7 +14,10 @@ var (
 )
 
 func EncInt8(v int8) ([]byte, error) {
-	return encInt16(int16(v)), nil
+	if v < 0 {
+		return []byte{255, byte(v)}, nil
+	}
+	return []byte{0, byte(v)}, nil
 }
 
 func EncInt8R(v *int8) ([]byte, error) {
@@ -153,7 +156,11 @@ func EncBigIntR(v *big.Int) ([]byte, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return EncBigInt(*v)
+	if v.Cmp(maxBigInt) == 1 || v.Cmp(minBigInt) == -1 {
+		return nil, fmt.Errorf("failed to marshal smallint: value (%T)(%s) out of range", v, v.String())
+	}
+	iv := v.Int64()
+	return []byte{byte(iv >> 8), byte(iv)}, nil
 }
 
 func EncString(v string) ([]byte, error) {
@@ -177,12 +184,44 @@ func EncStringR(v *string) ([]byte, error) {
 
 func EncReflect(v reflect.Value) ([]byte, error) {
 	switch v.Type().Kind() {
-	case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
-		return EncInt64(v.Int())
-	case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8:
-		return EncUint64(v.Uint())
+	case reflect.Int8:
+		val := v.Int()
+		if val < 0 {
+			return []byte{255, byte(val)}, nil
+		}
+		return []byte{0, byte(val)}, nil
+	case reflect.Int16:
+		val := v.Int()
+		return []byte{byte(val >> 8), byte(val)}, nil
+	case reflect.Int, reflect.Int64, reflect.Int32:
+		val := v.Int()
+		if val > math.MaxInt16 || val < math.MinInt16 {
+			return nil, fmt.Errorf("failed to marshal smallint: custom type value %#v out of range", v)
+		}
+		return []byte{byte(val >> 8), byte(val)}, nil
+	case reflect.Uint8:
+		val := v.Uint()
+		return []byte{0, byte(val)}, nil
+	case reflect.Uint16:
+		val := v.Uint()
+		return []byte{byte(val >> 8), byte(val)}, nil
+	case reflect.Uint, reflect.Uint64, reflect.Uint32:
+		val := v.Uint()
+		if val > math.MaxUint16 {
+			return nil, fmt.Errorf("failed to marshal smallint: custom type value %#v out of range", v.Interface())
+		}
+		return []byte{byte(val >> 8), byte(val)}, nil
 	case reflect.String:
-		return EncString(v.String())
+		val := v.String()
+		if val == "" {
+			return nil, nil
+		}
+
+		n, err := strconv.ParseInt(val, 10, 16)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal smallint: can not marshal custom string %#v %s", v.Interface(), err)
+		}
+		return []byte{byte(n >> 8), byte(n)}, nil
 	default:
 		return nil, fmt.Errorf("failed to marshal smallint: unsupported value type (%T)(%#[1]v)", v.Interface())
 	}
