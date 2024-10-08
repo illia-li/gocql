@@ -27,11 +27,23 @@ func DecInt8(p []byte, v *int8) error {
 }
 
 func DecInt8R(p []byte, v **int8) error {
-	if p != nil {
-		*v = new(int8)
-		return DecInt8(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(int8)
+		}
+	case 2:
+		val := decInt16(p)
+		if val > math.MaxInt8 || val < math.MinInt8 {
+			return fmt.Errorf("failed to unmarshal smallint: to unmarshal into int8, the data should be in the int8 range")
+		}
+		tmp := int8(val)
+		*v = &tmp
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -48,11 +60,19 @@ func DecInt16(p []byte, v *int16) error {
 }
 
 func DecInt16R(p []byte, v **int16) error {
-	if p != nil {
-		*v = new(int16)
-		return DecInt16(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(int16)
+		}
+	case 2:
+		val := decInt16(p)
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -61,7 +81,7 @@ func DecInt32(p []byte, v *int32) error {
 	case 0:
 		*v = 0
 	case 2:
-		*v = int32(decInt16(p))
+		*v = decInt32(p)
 	default:
 		return errWrongDataLen
 	}
@@ -69,11 +89,19 @@ func DecInt32(p []byte, v *int32) error {
 }
 
 func DecInt32R(p []byte, v **int32) error {
-	if p != nil {
-		*v = new(int32)
-		return DecInt32(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(int32)
+		}
+	case 2:
+		val := decInt32(p)
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -82,7 +110,7 @@ func DecInt64(p []byte, v *int64) error {
 	case 0:
 		*v = 0
 	case 2:
-		*v = int64(decInt16(p))
+		*v = decInt64(p)
 	default:
 		return errWrongDataLen
 	}
@@ -90,11 +118,19 @@ func DecInt64(p []byte, v *int64) error {
 }
 
 func DecInt64R(p []byte, v **int64) error {
-	if p != nil {
-		*v = new(int64)
-		return DecInt64(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(int64)
+		}
+	case 2:
+		val := decInt64(p)
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -103,7 +139,7 @@ func DecInt(p []byte, v *int) error {
 	case 0:
 		*v = 0
 	case 2:
-		*v = int(decInt16(p))
+		*v = decInt(p)
 	default:
 		return errWrongDataLen
 	}
@@ -111,11 +147,19 @@ func DecInt(p []byte, v *int) error {
 }
 
 func DecIntR(p []byte, v **int) error {
-	if p != nil {
-		*v = new(int)
-		return DecInt(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(int)
+		}
+	case 2:
+		val := decInt(p)
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -135,11 +179,22 @@ func DecUint8(p []byte, v *uint8) error {
 }
 
 func DecUint8R(p []byte, v **uint8) error {
-	if p != nil {
-		*v = new(uint8)
-		return DecUint8(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(uint8)
+		}
+	case 2:
+		if p[0] != 0 {
+			return fmt.Errorf("failed to unmarshal smallint: to unmarshal into uint8, the data should be in the uint8 range")
+		}
+		val := p[1]
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -156,11 +211,19 @@ func DecUint16(p []byte, v *uint16) error {
 }
 
 func DecUint16R(p []byte, v **uint16) error {
-	if p != nil {
-		*v = new(uint16)
-		return DecUint16(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(uint16)
+		}
+	case 2:
+		val := uint16(p[0])<<8 | uint16(p[1])
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -177,11 +240,19 @@ func DecUint32(p []byte, v *uint32) error {
 }
 
 func DecUint32R(p []byte, v **uint32) error {
-	if p != nil {
-		*v = new(uint32)
-		return DecUint32(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(uint32)
+		}
+	case 2:
+		val := uint32(p[0])<<8 | uint32(p[1])
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -198,11 +269,19 @@ func DecUint64(p []byte, v *uint64) error {
 }
 
 func DecUint64R(p []byte, v **uint64) error {
-	if p != nil {
-		*v = new(uint64)
-		return DecUint64(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(uint64)
+		}
+	case 2:
+		val := decUint64(p)
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -219,24 +298,32 @@ func DecUint(p []byte, v *uint) error {
 }
 
 func DecUintR(p []byte, v **uint) error {
-	if p != nil {
-		*v = new(uint)
-		return DecUint(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = new(uint)
+		}
+	case 2:
+		val := uint(p[0])<<8 | uint(p[1])
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
 func DecString(p []byte, v *string) error {
 	switch len(p) {
 	case 0:
-		if p != nil {
-			*v = "0"
-		} else {
+		if p == nil {
 			*v = ""
+		} else {
+			*v = "0"
 		}
 	case 2:
-		*v = strconv.FormatInt(int64(decInt16(p)), 10)
+		*v = strconv.FormatInt(decInt64(p), 10)
 	default:
 		return errWrongDataLen
 	}
@@ -244,11 +331,20 @@ func DecString(p []byte, v *string) error {
 }
 
 func DecStringR(p []byte, v **string) error {
-	if p != nil {
-		*v = new(string)
-		return DecString(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			val := "0"
+			*v = &val
+		}
+	case 2:
+		val := strconv.FormatInt(decInt64(p), 10)
+		*v = &val
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -257,7 +353,7 @@ func DecBigInt(p []byte, v *big.Int) error {
 	case 0:
 		v.SetInt64(0)
 	case 2:
-		v.SetInt64(int64(decInt16(p)))
+		v.SetInt64(decInt64(p))
 	default:
 		return errWrongDataLen
 	}
@@ -265,11 +361,18 @@ func DecBigInt(p []byte, v *big.Int) error {
 }
 
 func DecBigIntR(p []byte, v **big.Int) error {
-	if p != nil {
-		*v = big.NewInt(0)
-		return DecBigInt(p, *v)
+	switch len(p) {
+	case 0:
+		if p == nil {
+			*v = nil
+		} else {
+			*v = big.NewInt(0)
+		}
+	case 2:
+		*v = big.NewInt(decInt64(p))
+	default:
+		return errWrongDataLen
 	}
-	*v = nil
 	return nil
 }
 
@@ -295,14 +398,24 @@ func DecReflect(p []byte, v reflect.Value) error {
 }
 
 func DecReflectR(p []byte, v reflect.Value) error {
-	if p != nil {
-		zeroValue := reflect.New(v.Type().Elem().Elem())
-		v.Elem().Set(zeroValue)
-		return DecReflect(p, v.Elem())
+	if v.IsNil() {
+		return fmt.Errorf("failed to unmarshal tinyint: can not unmarshal into nil reference (%T)(%#[1]v)", v.Interface())
 	}
-	nilValue := reflect.Zero(v.Elem().Type())
-	v.Elem().Set(nilValue)
-	return nil
+
+	switch v.Type().Elem().Elem().Kind() {
+	case reflect.Int8:
+		return decReflectInt8R(p, v)
+	case reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
+		return decReflectIntsR(p, v)
+	case reflect.Uint8:
+		return decReflectUint8R(p, v)
+	case reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
+		return decReflectUintsR(p, v)
+	case reflect.String:
+		return decReflectStringR(p, v)
+	default:
+		return fmt.Errorf("failed to unmarshal tinyint: unsupported value type (%T)(%#[1]v)", v.Interface())
+	}
 }
 
 func decReflectInt8(p []byte, v reflect.Value) error {
@@ -310,11 +423,11 @@ func decReflectInt8(p []byte, v reflect.Value) error {
 	case 0:
 		v.SetInt(0)
 	case 2:
-		val := decInt16(p)
+		val := decInt64(p)
 		if val > math.MaxInt8 || val < math.MinInt8 {
-			return fmt.Errorf("failed to unmarshal smallint: to unmarshal into int8, the data should be in the int8 range")
+			return fmt.Errorf("failed to unmarshal smallint: to unmarshal into custom int8, the data should be in the int8 range")
 		}
-		v.SetInt(int64(val))
+		v.SetInt(val)
 	default:
 		return errWrongDataLen
 	}
@@ -326,7 +439,7 @@ func decReflectInts(p []byte, v reflect.Value) error {
 	case 0:
 		v.SetInt(0)
 	case 2:
-		v.SetInt(int64(decInt16(p)))
+		v.SetInt(decInt64(p))
 	default:
 		return errWrongDataLen
 	}
@@ -339,7 +452,7 @@ func decReflectUint8(p []byte, v reflect.Value) error {
 		v.SetUint(0)
 	case 2:
 		if p[0] != 0 {
-			return fmt.Errorf("failed to unmarshal smallint: to unmarshal into uint8, the data should be in the uint8 range")
+			return fmt.Errorf("failed to unmarshal smallint: to unmarshal into custom uint8, the data should be in the uint8 range")
 		}
 		v.SetUint(uint64(p[1]))
 	default:
@@ -369,7 +482,98 @@ func decReflectString(p []byte, v reflect.Value) error {
 			v.SetString("")
 		}
 	case 2:
-		v.SetString(strconv.FormatInt(int64(decInt16(p)), 10))
+		v.SetString(strconv.FormatInt(decInt64(p), 10))
+	default:
+		return errWrongDataLen
+	}
+	return nil
+}
+
+func decReflectNullableR(p []byte, v reflect.Value) reflect.Value {
+	if p == nil {
+		return reflect.Zero(v.Elem().Type())
+	}
+	return reflect.New(v.Type().Elem().Elem())
+}
+
+func decReflectInt8R(p []byte, v reflect.Value) error {
+	switch len(p) {
+	case 0:
+		v.Elem().Set(decReflectNullableR(p, v))
+	case 2:
+		val := decInt64(p)
+		if val > math.MaxInt8 || val < math.MinInt8 {
+			return fmt.Errorf("failed to unmarshal smallint: to unmarshal into custom int8, the data should be in the int8 range")
+		}
+		newVal := reflect.New(v.Type().Elem().Elem())
+		newVal.Elem().SetInt(val)
+		v.Elem().Set(newVal)
+	default:
+		return errWrongDataLen
+	}
+	return nil
+}
+
+func decReflectIntsR(p []byte, v reflect.Value) error {
+	switch len(p) {
+	case 0:
+		v.Elem().Set(decReflectNullableR(p, v))
+	case 2:
+		val := reflect.New(v.Type().Elem().Elem())
+		val.Elem().SetInt(decInt64(p))
+		v.Elem().Set(val)
+	default:
+		return errWrongDataLen
+	}
+	return nil
+}
+
+func decReflectUint8R(p []byte, v reflect.Value) error {
+	switch len(p) {
+	case 0:
+		v.Elem().Set(decReflectNullableR(p, v))
+	case 2:
+		if p[0] != 0 {
+			return fmt.Errorf("failed to unmarshal smallint: to unmarshal into custom uint8, the data should be in the uint8 range")
+		}
+		newVal := reflect.New(v.Type().Elem().Elem())
+		newVal.Elem().SetUint(uint64(p[1]))
+		v.Elem().Set(newVal)
+	default:
+		return errWrongDataLen
+	}
+	return nil
+}
+
+func decReflectUintsR(p []byte, v reflect.Value) error {
+	switch len(p) {
+	case 0:
+		v.Elem().Set(decReflectNullableR(p, v))
+	case 2:
+		val := reflect.New(v.Type().Elem().Elem())
+		val.Elem().SetUint(decUint64(p))
+		v.Elem().Set(val)
+	default:
+		return errWrongDataLen
+	}
+	return nil
+}
+
+func decReflectStringR(p []byte, v reflect.Value) error {
+	switch len(p) {
+	case 0:
+		var val reflect.Value
+		if p == nil {
+			val = reflect.Zero(v.Type().Elem())
+		} else {
+			val = reflect.New(v.Type().Elem().Elem())
+			val.Elem().SetString("0")
+		}
+		v.Elem().Set(val)
+	case 2:
+		val := reflect.New(v.Type().Elem().Elem())
+		val.Elem().SetString(strconv.FormatInt(decInt64(p), 10))
+		v.Elem().Set(val)
 	default:
 		return errWrongDataLen
 	}
@@ -378,6 +582,27 @@ func decReflectString(p []byte, v reflect.Value) error {
 
 func decInt16(p []byte) int16 {
 	return int16(p[0])<<8 | int16(p[1])
+}
+
+func decInt32(p []byte) int32 {
+	if p[0] > math.MaxInt8 {
+		return -65536 + int32(p[0])<<8 | int32(p[1])
+	}
+	return int32(p[0])<<8 | int32(p[1])
+}
+
+func decInt64(p []byte) int64 {
+	if p[0] > math.MaxInt8 {
+		return -65536 + int64(p[0])<<8 | int64(p[1])
+	}
+	return int64(p[0])<<8 | int64(p[1])
+}
+
+func decInt(p []byte) int {
+	if p[0] > math.MaxInt8 {
+		return -65536 + int(p[0])<<8 | int(p[1])
+	}
+	return int(p[0])<<8 | int(p[1])
 }
 
 func decUint64(p []byte) uint64 {
