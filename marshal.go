@@ -18,11 +18,10 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/inf.v0"
-
 	"github.com/gocql/gocql/serialization/bigint"
 	"github.com/gocql/gocql/serialization/counter"
 	"github.com/gocql/gocql/serialization/cqlint"
+	"github.com/gocql/gocql/serialization/decimal"
 	"github.com/gocql/gocql/serialization/float"
 	"github.com/gocql/gocql/serialization/smallint"
 	"github.com/gocql/gocql/serialization/tinyint"
@@ -155,7 +154,7 @@ func Marshal(info TypeInfo, value interface{}) ([]byte, error) {
 	case TypeDouble:
 		return marshalDouble(info, value)
 	case TypeDecimal:
-		return marshalDecimal(info, value)
+		return marshalDecimal(value)
 	case TypeTime:
 		return marshalTime(info, value)
 	case TypeTimestamp:
@@ -261,7 +260,7 @@ func Unmarshal(info TypeInfo, data []byte, value interface{}) error {
 	case TypeDouble:
 		return unmarshalDouble(info, data, value)
 	case TypeDecimal:
-		return unmarshalDecimal(info, data, value)
+		return unmarshalDecimal(data, value)
 	case TypeTime:
 		return unmarshalTime(info, data, value)
 	case TypeTimestamp:
@@ -956,44 +955,19 @@ func unmarshalDouble(info TypeInfo, data []byte, value interface{}) error {
 	return unmarshalErrorf("can not unmarshal %s into %T", info, value)
 }
 
-func marshalDecimal(info TypeInfo, value interface{}) ([]byte, error) {
-	if value == nil {
-		return nil, nil
+func marshalDecimal(value interface{}) ([]byte, error) {
+	data, err := decimal.Marshal(value)
+	if err != nil {
+		return nil, wrapMarshalError(err, "marshal error")
 	}
-
-	switch v := value.(type) {
-	case Marshaler:
-		return v.MarshalCQL(info)
-	case unsetColumn:
-		return nil, nil
-	case inf.Dec:
-		unscaled := encBigInt2C(v.UnscaledBig())
-		if unscaled == nil {
-			return nil, marshalErrorf("can not marshal %T into %s", value, info)
-		}
-
-		buf := make([]byte, 4+len(unscaled))
-		copy(buf[0:4], encInt(int32(v.Scale())))
-		copy(buf[4:], unscaled)
-		return buf, nil
-	}
-	return nil, marshalErrorf("can not marshal %T into %s", value, info)
+	return data, nil
 }
 
-func unmarshalDecimal(info TypeInfo, data []byte, value interface{}) error {
-	switch v := value.(type) {
-	case Unmarshaler:
-		return v.UnmarshalCQL(info, data)
-	case *inf.Dec:
-		if len(data) < 4 {
-			return unmarshalErrorf("inf.Dec needs at least 4 bytes, while value has only %d", len(data))
-		}
-		scale := decInt(data[0:4])
-		unscaled := decBigInt2C(data[4:], nil)
-		*v = *inf.NewDecBig(unscaled, inf.Scale(scale))
-		return nil
+func unmarshalDecimal(data []byte, value interface{}) error {
+	if err := decimal.Unmarshal(data, value); err != nil {
+		return wrapUnmarshalError(err, "unmarshal error")
 	}
-	return unmarshalErrorf("can not unmarshal %s into %T", info, value)
+	return nil
 }
 
 // decBigInt2C sets the value of n to the big-endian two's complement
