@@ -27,7 +27,7 @@ jobs:
       - run: go vet ./...
 
       - name: Run unit tests
-        run: go test ./debounce/... -tags unit -count 10000 -run SimpleDebouncerCalls -failfast -v -race
+        run: go test -tags unit -race ./...
 
 #      - name: Install Docker compose
 #        env:
